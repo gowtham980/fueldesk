@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Targets{% endblock %}
+{% block heading %}Targets{% endblock %}
+{% block subtitle %}Transparent BMR → TDEE → macros{% endblock %}
+
+{% block content %}
+{% if not targets or not profile %}
+<section class="empty-state card">
+  <h2>No targets yet</h2>
+  <p>Save a profile to compute Mifflin-St Jeor targets.</p>
+  <a class="btn btn-primary" href="/profile">Go to profile</a>
+</section>
+{% else %}
+<section class="stat-grid">
+  <article class="card stat-card">
+    <div class="stat-label">BMR</div>
+    <div class="stat-value">{{ targets.bmr }}</div>
+    <div class="stat-meta">kcal resting</div>
+  </article>
+  <article class="card stat-card">
+    <div class="stat-label">TDEE</div>
+    <div class="stat-value">{{ targets.tdee }}</div>
+    <div class="stat-meta">maintenance estimate</div>
+  </article>
+  <article class="card stat-card">
+    <div class="stat-label">Daily target</div>
+    <div class="stat-value accent-mint">{{ targets.calorie_target }}</div>
+    <div class="stat-meta">kcal for goal “{{ profile.goal }}”</div>
+  </article>
+  <article class="card stat-card">
+    <div class="stat-label">Macros P / C / F</div>
+    <div class="stat-value small-stat">{{ targets.protein_g }} / {{ targets.carbs_g }} / {{ targets.fat_g }}</div>
+    <div class="stat-meta">grams per day</div>
+  </article>
+</section>
+
+<article class="card formula-card">
+  <h2>Formula breakdown</h2>
+  <details open>
+    <summary>Mifflin-St Jeor steps</summary>
+    <ol class="formula-steps">
+      <li>
+        <strong>BMR</strong> —
+        {% if profile.sex == 'male' %}
+        10×weight + 6.25×height − 5×age + 5
+        {% else %}
+        10×weight + 6.25×height − 5×age − 161
+        {% endif %}
+        using weight {{ profile.weight_kg }} kg, height {{ profile.height_cm }} cm, age {{ profile.age }}.
+        Result: <strong>{{ targets.bmr }} kcal</strong>.
+      </li>
+      <li>
+        <strong>Activity multiplier</strong> for “{{ profile.activity_level }}” applied to BMR →
+        TDEE <strong>{{ targets.tdee }} kcal</strong>.
+      </li>
+      <li>
+        <strong>Goal adjustment</strong> (“{{ profile.goal }}”) shifts TDEE to daily target
+        <strong>{{ targets.calorie_target }} kcal</strong>.
+      </li>
+      <li>
+        <strong>Macros</strong>: protein scaled to bodyweight for your goal; fat ≈ 25% of calories;
+        carbohydrates fill the remainder →
+        P <strong>{{ targets.protein_g }}g</strong>,
+        C <strong>{{ targets.carbs_g }}g</strong>,
+        F <strong>{{ targets.fat_g }}g</strong>.
+      </li>
+    </ol>
+  </details>
+  <p class="formula-notes">{{ targets.formula_notes }}</p>
+  <p class="meta">These are educational estimates, not prescriptions. Individual needs vary.</p>
+</article>
+{% endif %}
+{% endblock %}

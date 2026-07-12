@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+{% block subtitle %}Today’s fuel + training at a glance{% endblock %}
+
+{% block content %}
+{% if not profile %}
+<section class="empty-state card">
+  <div class="empty-icon" aria-hidden="true">◇</div>
+  <h2>Set up your profile</h2>
+  <p>Enter body stats, goal, diet rules, and equipment. fueldesk will build transparent targets plus a weekly meal and training protocol.</p>
+  <a class="btn btn-primary" href="/profile">Set up your profile</a>
+</section>
+{% elif not targets %}
+<section class="empty-state card">
+  <h2>No protocol yet</h2>
+  <p>Generate your first week of meals and training from your profile.</p>
+  <form method="post" action="/protocol/generate">
+    <button class="btn btn-primary" type="submit">Generate this week's protocol</button>
+  </form>
+</section>
+{% else %}
+<section class="stat-grid">
+  <article class="card stat-card">
+    <div class="stat-label">Calories</div>
+    <div class="stat-value">{{ targets.calorie_target }}</div>
+    <div class="stat-meta">kcal / day · goal {{ profile.goal }}</div>
+  </article>
+  <article class="card stat-card">
+    <div class="stat-label">Protein (P)</div>
+    <div class="stat-value accent-mint">{{ targets.protein_g }}g</div>
+    <div class="stat-meta">from {{ profile.weight_kg }} kg bodyweight</div>
+  </article>
+  <article class="card stat-card">
+    <div class="stat-label">Carbs (C)</div>
+    <div class="stat-value accent-coral">{{ targets.carbs_g }}g</div>
+    <div class="stat-meta">fills remaining calories</div>
+  </article>
+  <article class="card stat-card">
+    <div class="stat-label">Fat (F)</div>
+    <div class="stat-value">{{ targets.fat_g }}g</div>
+    <div class="stat-meta">~25% of calories</div>
+  </article>
+</section>
+
+<section class="two-col">
+  <article class="card">
+    <div class="card-head">
+      <h2>Today · {{ day_name }} meals</h2>
+      <a href="/meals" class="text-link">Full week</a>
+    </div>
+    {% if today_meals %}
+      {% if meal_day_totals %}
+      <p class="meta">Day total ≈ {{ meal_day_totals.calories }} kcal · P {{ meal_day_totals.protein }}g · C {{ meal_day_totals.carbs }}g · F {{ meal_day_totals.fat }}g</p>
+      {% endif %}
+      <ul class="meal-list">
+        {% for m in today_meals.meals %}
+        <li>
+          <strong>{{ m.name }}</strong>
+          <span class="meta">{{ m.calories }} kcal · P{{ m.protein }} C{{ m.carbs }} F{{ m.fat }}</span>
+          <div class="item-chips">
+            {% for it in m.foods %}
+            <span class="chip">{{ it.name }}</span>
+            {% endfor %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No meal plan — generate protocol.</p>
+    {% endif %}
+  </article>
+
+  <article class="card">
+    <div class="card-head">
+      <h2>Today · training</h2>
+      <a href="/training" class="text-link">Full week</a>
+    </div>
+    {% if today_workout %}
+      <p class="badge {% if today_workout.is_rest %}badge-rest{% else %}badge-train{% endif %}">{{ today_workout.focus }}</p>
+      <ul class="ex-list">
+        {% for e in today_workout.exercises %}
+        <li>
+          <strong>{{ e.name }}</strong>
+          <span class="meta">{{ e.sets }} × {{ e.reps }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No training plan — generate protocol.</p>
+    {% endif %}
+  </article>
+</section>
+
+<section class="two-col">
+  <article class="card">
+    <div class="card-head">
+      <h2>Recent check-ins</h2>
+      <a href="/checkins" class="text-link">Log check-in</a>
+    </div>
+    {% if checkins %}
+    <table class="table">
+      <thead>
+        <tr><th>Date</th><th>Weight</th><th>Meals%</th><th>Train%</th><th>Energy</th></tr>
+      </thead>
+      <tbody>
+        {% for c in checkins[:5] %}
+        <tr>
+          <td>{{ c.date }}</td>
+          <td>{% if c.weight_kg %}{{ c.weight_kg }} kg{% else %}—{% endif %}</td>
+          <td>{% if c.adherence_meals is not none %}{{ c.adherence_meals }}{% else %}—{% endif %}</td>
+          <td>{% if c.adherence_training is not none %}{{ c.adherence_training }}{% else %}—{% endif %}</td>
+          <td>{% if c.energy is not none %}{{ c.energy }}/5{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted">No check-ins yet. Log weight and adherence to unlock adjustments.</p>
+    {% endif %}
+  </article>
+
+  <article class="card">
+    <h2>Suggested adjustments</h2>
+    {% if suggestions %}
+    <ul class="suggest-list">
+      {% for s in suggestions %}
+      <li>{{ s }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">Suggestions appear after a few check-ins.</p>
+    {% endif %}
+    <p class="meta tip">Formula transparency lives on <a href="/targets">Targets</a>.</p>
+  </article>
+</section>
+{% endif %}
+{% endblock %}

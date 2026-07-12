@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Training{% endblock %}
+{% block heading %}Training{% endblock %}
+{% block subtitle %}Weekly protocol matched to equipment & days{% endblock %}
+
+{% block content %}
+{% if not workout %}
+<section class="empty-state card">
+  <h2>No training plan</h2>
+  <p>Generate a protocol from your profile.</p>
+  <a class="btn btn-primary" href="/profile">Profile</a>
+</section>
+{% else %}
+<p class="meta banner-meta">
+  {{ training_days_count }} training day{% if training_days_count != 1 %}s{% endif %}
+  {% if profile %} · {{ profile.days_per_week }} requested · {{ profile.experience }} · equipment: {{ (profile.equipment or ['bodyweight']) | join(', ') }}{% endif %}
+</p>
+
+<div class="week-grid">
+  {% for day in workout.days %}
+  <article class="card day-card {% if day.is_rest %}rest-day{% endif %}">
+    <div class="card-head">
+      <h2>{{ day.day }}</h2>
+      <span class="badge {% if day.is_rest %}badge-rest{% else %}badge-train{% endif %}">{{ day.focus }}</span>
+    </div>
+    <ul class="ex-list">
+      {% for e in day.exercises %}
+      <li>
+        <div class="ex-main">
+          <strong>{{ e.name }}</strong>
+          <span class="sets">{{ e.sets }} × {{ e.reps }}</span>
+        </div>
+        {% if e.notes %}<div class="meta">{{ e.notes }}</div>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </article>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

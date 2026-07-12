@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Check-ins{% endblock %}
+{% block heading %}Check-ins{% endblock %}
+{% block subtitle %}Weight, adherence, energy — then gentle adjustments{% endblock %}
+
+{% block content %}
+<section class="two-col">
+  <article class="card">
+    <h2>Log check-in</h2>
+    <form method="post" action="/checkins" class="form-card bare-form">
+      <div class="form-grid">
+        <div class="field">
+          <label for="date">Date</label>
+          <input id="date" name="date" type="date" value="{{ today }}" required />
+        </div>
+        <div class="field">
+          <label for="weight_kg">Weight (kg)</label>
+          <input id="weight_kg" name="weight_kg" type="number" step="0.1" min="30" max="400"
+                 value="{{ profile.weight_kg if profile else '' }}" />
+        </div>
+        <div class="field">
+          <label for="adherence_meals">Meal adherence (0–100)</label>
+          <input id="adherence_meals" name="adherence_meals" type="number" min="0" max="100" value="80" />
+        </div>
+        <div class="field">
+          <label for="adherence_training">Training adherence (0–100)</label>
+          <input id="adherence_training" name="adherence_training" type="number" min="0" max="100" value="80" />
+        </div>
+        <div class="field">
+          <label for="energy">Energy (1–5)</label>
+          <input id="energy" name="energy" type="number" min="1" max="5" value="3" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="notes">Notes</label>
+        <textarea id="notes" name="notes" rows="2" placeholder="Sleep, stress, travel…"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Save check-in</button>
+    </form>
+  </article>
+
+  <article class="card">
+    <h2>Suggested adjustments</h2>
+    <ul class="suggest-list">
+      {% for s in suggestions %}
+      <li>{{ s }}</li>
+      {% else %}
+      <li class="muted">Log a few check-ins to unlock suggestions.</li>
+      {% endfor %}
+    </ul>
+    {% if weights and weights|length >= 2 %}
+    <h3 class="subhead">Weight sparkline</h3>
+    {% set ws = weights %}
+    {% set vals = ws | map(attribute='w') | list %}
+    {% set min_w = vals | min %}
+    {% set max_w = vals | max %}
+    {% set span = (max_w - min_w) if (max_w - min_w) > 0 else 1 %}
+    <svg class="spark" viewBox="0 0 240 60" role="img" aria-label="Weight trend">
+      {% set n = vals | length %}
+      {% set pts = [] %}
+      {% for v in vals %}
+        {% set x = (loop.index0 / ([n - 1, 1] | max)) * 220 + 10 %}
+        {% set y = 50 - ((v - min_w) / span) * 40 %}
+        <!-- points built below -->
+      {% endfor %}
+      <polyline fill="none" stroke="var(--mint)" stroke-width="2"
+        points="{% for v in vals %}{{ '%.1f' % ((loop.index0 / ([vals|length - 1, 1]|max)) * 220 + 10) }},{{ '%.1f' % (50 - ((v - min_w) / span) * 40) }} {% endfor %}" />
+      {% for v in vals %}
+      <circle cx="{{ '%.1f' % ((loop.index0 / ([vals|length - 1, 1]|max)) * 220 + 10) }}"
+              cy="{{ '%.1f' % (50 - ((v - min_w) / span) * 40) }}"
+              r="2.5" fill="var(--coral)" />
+      {% endfor %}
+    </svg>
+    <p class="meta">{{ weights[0].date }} → {{ weights[-1].date }} · {{ '%.1f' % weights[0].w }} → {{ '%.1f' % weights[-1].w }} kg</p>
+    {% endif %}
+  </article>
+</section>
+
+<article class="card">
+  <h2>History</h2>
+  {% if checkins %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Weight</th>
+          <th>Meals %</th>
+          <th>Training %</th>
+          <th>Energy</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in checkins %}
+        <tr>
+          <td>{{ c.date }}</td>
+          <td>{% if c.weight_kg is not none %}{{ c.weight_kg }}{% else %}—{% endif %}</td>
+          <td>{% if c.adherence_meals is not none %}{{ c.adherence_meals }}{% else %}—{% endif %}</td>
+          <td>{% if c.adherence_training is not none %}{{ c.adherence_training }}{% else %}—{% endif %}</td>
+          <td>{% if c.energy is not none %}{{ c.energy }}/5{% else %}—{% endif %}</td>
+          <td class="notes-cell">{{ c.notes or '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted">No check-ins yet.</p>
+  {% endif %}
+</article>
+{% endblock %}

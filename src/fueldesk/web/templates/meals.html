@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Meals{% endblock %}
+{% block heading %}Meals{% endblock %}
+{% block subtitle %}Weekly fuel plan from your targets & diet flags{% endblock %}
+
+{% block content %}
+{% if not meals %}
+<section class="empty-state card">
+  <h2>No meal plan</h2>
+  <p>Generate a protocol after setting your profile.</p>
+  <a class="btn btn-primary" href="/profile">Profile</a>
+</section>
+{% else %}
+{% if targets %}
+<p class="meta banner-meta">Target ≈ {{ targets.calorie_target }} kcal · P{{ targets.protein_g }} C{{ targets.carbs_g }} F{{ targets.fat_g }}
+  {% if profile and profile.diet_flags %} · flags: {{ profile.diet_flags | join(', ') }}{% endif %}
+</p>
+{% endif %}
+
+<div class="week-grid">
+  {% for day in meals.days %}
+  {% set di = loop.index0 %}
+  <article class="card day-card">
+    <div class="card-head">
+      <h2>{{ day.day }}</h2>
+      {% if day_stats and day_stats[di] %}
+      <span class="meta">{{ day_stats[di].calories }} kcal</span>
+      {% endif %}
+    </div>
+    {% for meal in day.meals %}
+    {% set mi = loop.index0 %}
+    <details class="meal-block" {% if di == 0 and mi == 0 %}open{% endif %}>
+      <summary>
+        <span>{{ meal.name }}</span>
+        <span class="meta">{{ meal.calories }} kcal · P{{ meal.protein }} C{{ meal.carbs }} F{{ meal.fat }}</span>
+      </summary>
+      <ul class="item-list">
+        {% for item in meal.foods %}
+        {% set ii = loop.index0 %}
+        <li class="item-row">
+          <div>
+            <strong>{{ item.name }}</strong>
+            <div class="meta">{{ item.calories }} kcal · P{{ item.protein }} C{{ item.carbs }} F{{ item.fat }}</div>
+          </div>
+          <form method="post" action="/meals/swap" class="inline-form">
+            <input type="hidden" name="day_index" value="{{ di }}" />
+            <input type="hidden" name="meal_index" value="{{ mi }}" />
+            <input type="hidden" name="item_index" value="{{ ii }}" />
+            <button type="submit" class="btn btn-ghost btn-sm" title="Swap for alternative">Swap</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endfor %}
+  </article>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

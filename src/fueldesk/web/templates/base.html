@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}fueldesk{% endblock %} · Fuel & Training Protocol Desk</title>
+  <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Primary">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">⚡</span>
+        <div>
+          <div class="brand-name">fueldesk</div>
+          <div class="brand-tag">protocol desk</div>
+        </div>
+      </div>
+      <nav class="nav">
+        {% for href, key, label in nav %}
+        <a class="nav-link {% if page == key %}active{% endif %}" href="{{ href }}">{{ label }}</a>
+        {% endfor %}
+        <a class="nav-link nav-export" href="/export.json">Export JSON</a>
+      </nav>
+      <div class="sidebar-foot">
+        <form method="post" action="/protocol/generate">
+          <button type="submit" class="btn btn-accent btn-block" {% if not profile %}disabled{% endif %}>
+            Generate this week's protocol
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <h1 class="page-title">{% block heading %}Dashboard{% endblock %}</h1>
+        <p class="page-sub">{% block subtitle %}Local-first diet + training protocol{% endblock %}</p>
+      </header>
+
+      {% if flashes %}
+      <div class="flashes" role="status">
+        {% for f in flashes %}
+        <div class="flash flash-{{ f.category }}">{{ f.message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <main class="content">
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="disclaimer">
+        {{ disclaimer }}
+      </footer>
+    </div>
+  </div>
+</body>
+</html>
