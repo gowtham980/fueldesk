@@ -16,3 +16,9 @@ htmlcov/
 .idea/
 .vscode/
 *.sqlite3
+
+# AI temp uploads / local data
+data/
+uploads/
+.env
+.env.*

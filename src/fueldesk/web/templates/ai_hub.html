@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}AI Assist{% endblock %}
+{% block heading %}AI Assist{% endblock %}
+{% block subtitle %}Faster onboarding via text + image — confirm before apply{% endblock %}
+
+{% block content %}
+<p class="banner-meta">Provider: <strong>{{ provider_label }}</strong> · Offline heuristics always available · Estimates are not medical advice.</p>
+
+<div class="ai-card-grid">
+  <a class="card ai-card" href="/ai/profile">
+    <div class="ai-card-icon" aria-hidden="true">✍️</div>
+    <h2>Describe yourself</h2>
+    <p class="muted">Free text → structured profile preview → apply & regenerate protocol.</p>
+    <span class="badge badge-provider">{{ provider_label }}</span>
+  </a>
+  <a class="card ai-card" href="/ai/meal">
+    <div class="ai-card-icon" aria-hidden="true">📷</div>
+    <h2>Meal photo estimate</h2>
+    <p class="muted">Upload a plate photo (or caption) → estimated items + macros. Confirm before logging.</p>
+    <span class="badge badge-provider">{{ provider_label }}</span>
+  </a>
+  <a class="card ai-card" href="/ai/equipment">
+    <div class="ai-card-icon" aria-hidden="true">🏋️</div>
+    <h2>Equipment photo</h2>
+    <p class="muted">Image + optional caption → equipment chips → apply to profile.</p>
+    <span class="badge badge-provider">{{ provider_label }}</span>
+  </a>
+</div>
+
+<div class="card tip">
+  <h2>Tips</h2>
+  <ul class="suggest-list">
+    <li>Default provider is <strong>Offline</strong> (regex heuristics, no network).</li>
+    <li>Configure Ollama or OpenAI-compatible APIs under <a href="/settings/ai">Settings</a>.</li>
+    <li>Always review confidence badges before applying.</li>
+  </ul>
+</div>
+{% endblock %}

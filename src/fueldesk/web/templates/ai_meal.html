@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Meal photo{% endblock %}
+{% block heading %}Meal photo estimate{% endblock %}
+{% block subtitle %}Estimates only — review before logging{% endblock %}
+
+{% block content %}
+<p class="banner-meta">Provider: <strong>{{ provider_label }}</strong> · Not medical nutrition analysis.</p>
+
+<form method="post" action="/ai/meal" enctype="multipart/form-data" class="card">
+  <input type="hidden" name="action" value="estimate" />
+  <div class="field">
+    <label for="image">Meal image (max 5 MB)</label>
+    <input id="image" name="image" type="file" accept="image/*" />
+  </div>
+  <div class="field">
+    <label for="caption">Optional caption / food keywords</label>
+    <input id="caption" name="caption" type="text" placeholder="e.g. chicken rice salad" />
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Estimate macros</button>
+    <a class="btn btn-ghost" href="/ai">Back</a>
+  </div>
+</form>
+
+{% if estimate %}
+<div class="card">
+  <div class="card-head">
+    <h2>Estimate</h2>
+    <span class="badge badge-conf-{{ conf_level }}">Confidence {{ "%.0f"|format((estimate.confidence or 0)*100) }}% · {{ estimate.provider }}{% if estimate.fallback_used %} (fallback){% endif %}</span>
+  </div>
+  <p class="muted">{{ estimate.disclaimer }}</p>
+  {% if estimate.notes %}
+  <ul class="suggest-list">
+    {% for n in estimate.notes %}<li>{{ n }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  <form method="post" action="/ai/meal">
+    <input type="hidden" name="action" value="save_note" />
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Item</th><th>Cal</th><th>P</th><th>C</th><th>F</th></tr>
+        </thead>
+        <tbody>
+          {% for it in estimate['items'] %}
+          <tr>
+            <td><input name="item_name" value="{{ it.name }}" /></td>
+            <td><input name="item_calories" type="number" value="{{ it.calories }}" style="width:5rem" /></td>
+            <td><input name="item_protein" type="number" step="0.1" value="{{ it.protein_g }}" style="width:4.5rem" /></td>
+            <td><input name="item_carbs" type="number" step="0.1" value="{{ it.carbs_g }}" style="width:4.5rem" /></td>
+            <td><input name="item_fat" type="number" step="0.1" value="{{ it.fat_g }}" style="width:4.5rem" /></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Total</th>
+            <th>{{ estimate.total_calories }}</th>
+            <th>{{ estimate.total_protein }}</th>
+            <th>{{ estimate.total_carbs }}</th>
+            <th>{{ estimate.total_fat }}</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Add note to check-in</button>
+    </div>
+  </form>
+
+  <form method="post" action="/ai/meal" class="form-actions">
+    <input type="hidden" name="action" value="discard" />
+    <button type="submit" class="btn btn-ghost">Discard</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

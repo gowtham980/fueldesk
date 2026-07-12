@@ -23,6 +23,10 @@ Most tools are **loggers** (food diaries, set trackers) or heavy gym CMS suites.
 2. **Cut with constraints** — vegetarian, no dairy, office job. Macro targets respect diet flags; meal slots pull only from allowed seed foods.  
 3. **Stall adjust** — weight flat ~14 days with solid adherence. Check-in history surfaces a small deficit or volume tweak instead of starting from zero.
 
+4. **AI onboarding** — paste "28F, 165cm, 62kg, vegetarian, lose fat, 4 days/week dumbbells" under **AI Assist → Describe yourself**, preview fields, apply & regenerate protocol offline.
+5. **Meal photo estimate** — upload a plate (or caption keywords) for rough macros; edit and save to check-in notes. Estimates only.
+6. **Equipment from photo/caption** — "rack, bench, dumbbells" → chips → apply to profile equipment.
+
 ## Quick start
 
 ```bash
@@ -54,6 +58,9 @@ Optional: `FUELDESK_DB=/path/to/custom.db fueldesk serve`
 | Training | 7-day plan; rest days; equipment-aware exercise pool |
 | Check-ins | Weight, meal/training adherence, energy + suggestions |
 | Export | `GET /export.json` full dump |
+| AI Assist | Profile text parse, meal photo estimate, equipment from image/caption |
+| AI providers | Offline heuristics (default), Ollama HTTP, OpenAI-compatible API |
+| Settings | Provider / base URL / model / API key (masked; env overrides) |
 | CLI | `fueldesk serve`, `fueldesk version` |
 
 ## Why not X?
@@ -80,10 +87,35 @@ fueldesk does **not** clone those UIs or codebases. It owns the **plan-from-prof
 ```
 src/fueldesk/
   domain/          # BMR/macros, meal & workout generators, adjust
-  services/        # protocol orchestration
+  services/        # protocol + AI assist orchestration
+  providers/       # offline / ollama / openai_compatible
   db/              # models, seed foods, session
   web/             # FastAPI app, routes, templates, static
 ```
+
+
+## AI Assist (v0.2)
+
+Local-first **confirm-before-apply** helpers. Domain math still owns targets/plans.
+
+```bash
+# Offline (default) — no network
+fueldesk serve
+# open /ai
+
+# Optional Ollama
+export FUELDESK_AI_PROVIDER=ollama
+export FUELDESK_AI_BASE_URL=http://127.0.0.1:11434
+export FUELDESK_AI_MODEL=llama3.2   # or a vision model for photos
+
+# Optional OpenAI-compatible
+export FUELDESK_AI_PROVIDER=openai_compatible
+export FUELDESK_AI_BASE_URL=https://api.openai.com/v1
+export FUELDESK_AI_MODEL=gpt-4o-mini
+export FUELDESK_AI_API_KEY=sk-...
+```
+
+Or configure under **Settings** (stored in SQLite; never commit keys). Remote failures fall back to offline heuristics with a banner.
 
 ## Development
 

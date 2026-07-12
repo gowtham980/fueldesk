@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Equipment AI{% endblock %}
+{% block heading %}Equipment from image{% endblock %}
+{% block subtitle %}Caption keywords work offline; vision when provider supports it{% endblock %}
+
+{% block content %}
+<p class="banner-meta">Provider: <strong>{{ provider_label }}</strong></p>
+
+<form method="post" action="/ai/equipment" enctype="multipart/form-data" class="card">
+  <input type="hidden" name="action" value="estimate" />
+  <div class="field">
+    <label for="image">Gym / gear photo (optional, max 5 MB)</label>
+    <input id="image" name="image" type="file" accept="image/*" />
+  </div>
+  <div class="field">
+    <label for="caption">Caption (recommended offline)</label>
+    <input id="caption" name="caption" type="text" placeholder="rack, bench, dumbbells, pull-up bar" />
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Detect equipment</button>
+    <a class="btn btn-ghost" href="/ai">Back</a>
+  </div>
+</form>
+
+{% if estimate %}
+<div class="card">
+  <div class="card-head">
+    <h2>Equipment preview</h2>
+    <span class="badge badge-conf-{{ conf_level }}">Confidence {{ "%.0f"|format((estimate.confidence or 0)*100) }}% · {{ estimate.provider }}{% if estimate.fallback_used %} (fallback){% endif %}</span>
+  </div>
+  {% if estimate.notes %}
+  <ul class="suggest-list">
+    {% for n in estimate.notes %}<li>{{ n }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  <form method="post" action="/ai/equipment">
+    <input type="hidden" name="action" value="apply" />
+    <fieldset class="chip-fieldset">
+      <legend>Select equipment to apply</legend>
+      <div class="chip-row">
+        {% set eq = estimate.equipment or [] %}
+        {% for val, label in equipment_options %}
+        <label class="chip-check">
+          <input type="checkbox" name="equipment" value="{{ val }}" {% if val in eq %}checked{% endif %} />
+          <span>{{ label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Apply to profile & regenerate</button>
+    </div>
+  </form>
+
+  <form method="post" action="/ai/equipment" class="form-actions">
+    <input type="hidden" name="action" value="discard" />
+    <button type="submit" class="btn btn-ghost">Discard</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

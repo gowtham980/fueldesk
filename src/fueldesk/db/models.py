@@ -89,3 +89,13 @@ class FoodItem(Base):
     carbs: Mapped[float] = mapped_column(Float)
     fat: Mapped[float] = mapped_column(Float)
     tags: Mapped[Any] = mapped_column(JSON, default=list)
+
+
+class Setting(Base):
+    """Key/value app settings (AI provider config, etc.)."""
+
+    __tablename__ = "settings"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[str] = mapped_column(Text, default="")
+

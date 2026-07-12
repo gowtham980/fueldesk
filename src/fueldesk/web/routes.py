@@ -77,6 +77,8 @@ def _base_ctx(request: Request, **extra: Any) -> dict[str, Any]:
             ("/meals", "meals", "Meals"),
             ("/training", "training", "Training"),
             ("/checkins", "checkins", "Check-ins"),
+            ("/ai", "ai", "AI Assist"),
+            ("/settings/ai", "settings", "Settings"),
         ],
         "disclaimer": (
             "Educational fitness planning tool only — not medical advice. "

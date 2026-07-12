@@ -8,6 +8,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from fueldesk import __version__
 from fueldesk.db.models import CheckIn, FoodItem, MealPlan, Profile, Targets, WorkoutPlan
 from fueldesk.domain.adjust import suggest_adjustments
 from fueldesk.domain.meal_plan import day_totals, generate_meal_week, swap_meal_item
@@ -247,7 +248,7 @@ def export_payload(session: Session) -> dict[str, Any]:
 
     return {
         "app": "fueldesk",
-        "version": "0.1.0",
+        "version": __version__,
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "disclaimer": "Educational fitness planning only — not medical advice.",
         "profile": profile_dict(profile),
