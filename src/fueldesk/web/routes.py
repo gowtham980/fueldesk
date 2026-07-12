@@ -71,14 +71,21 @@ def _base_ctx(request: Request, **extra: Any) -> dict[str, Any]:
         "flashes": _pop_flashes(request),
         "profile": extra.get("profile"),
         "nav": [
-            ("/", "dashboard", "Dashboard"),
+            ("/", "dashboard", "Home"),
+            ("/meals", "meals", "Meals"),
+            ("/ai", "ai", "AI"),
+            ("/training", "training", "Train"),
             ("/profile", "profile", "Profile"),
             ("/targets", "targets", "Targets"),
-            ("/meals", "meals", "Meals"),
-            ("/training", "training", "Training"),
             ("/checkins", "checkins", "Check-ins"),
-            ("/ai", "ai", "AI Assist"),
             ("/settings/ai", "settings", "Settings"),
+        ],
+        "mobile_nav": [
+            ("/", "dashboard", "Home", "⌂"),
+            ("/meals", "meals", "Meals", "🍽"),
+            ("/ai", "ai", "AI", "✦"),
+            ("/training", "training", "Train", "🏋️"),
+            ("/profile", "profile", "Profile", "◎"),
         ],
         "disclaimer": (
             "Educational fitness planning tool only — not medical advice. "

@@ -6,7 +6,7 @@ import os
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal, Protocol
 
-ProviderName = Literal["offline", "ollama", "openai_compatible"]
+ProviderName = Literal["offline", "ollama", "openai_compatible", "gemini"]
 
 KNOWN_EQUIPMENT = (
     "bodyweight",
@@ -29,6 +29,8 @@ class AIConfig:
     def label(self) -> str:
         if self.provider == "offline":
             return "Offline"
+        if self.provider == "gemini":
+            return "Gemini (ADK)"
         if self.provider == "ollama":
             host = (self.base_url or "").lower()
             if "ollama.com" in host:
@@ -162,7 +164,7 @@ def load_ai_config(settings: dict[str, str] | None = None) -> AIConfig:
         or settings.get("ai_provider")
         or "offline"
     ).strip().lower()
-    if provider not in ("offline", "ollama", "openai_compatible"):
+    if provider not in ("offline", "ollama", "openai_compatible", "gemini"):
         provider = "offline"
 
     base_url = (
@@ -177,6 +179,8 @@ def load_ai_config(settings: dict[str, str] | None = None) -> AIConfig:
     ).strip()
     api_key = (
         os.environ.get("FUELDESK_AI_API_KEY")
+        or os.environ.get("GOOGLE_API_KEY")
+        or os.environ.get("GEMINI_API_KEY")
         or os.environ.get("OLLAMA_API_KEY")
         or settings.get("ai_api_key")
         or ""
@@ -190,6 +194,8 @@ def load_ai_config(settings: dict[str, str] | None = None) -> AIConfig:
         base_url = "https://api.openai.com/v1"
     if provider == "openai_compatible" and not model:
         model = "gpt-4o-mini"
+    if provider == "gemini" and not model:
+        model = "gemini-2.0-flash"
 
     return AIConfig(
         provider=provider,  # type: ignore[arg-type]
@@ -210,6 +216,8 @@ def get_provider(config: AIConfig | None = None) -> AIProvider:
         from fueldesk.providers.openai_compat import OpenAICompatProvider
 
         return OpenAICompatProvider(cfg)
+    # gemini structured assist uses offline heuristics for parse/meal/equip;
+    # multi-turn coach uses ADK separately in services.adk_coach
     from fueldesk.providers.offline import OfflineProvider
 
     return OfflineProvider()

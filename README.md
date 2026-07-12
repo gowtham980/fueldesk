@@ -59,7 +59,8 @@ Optional: `FUELDESK_DB=/path/to/custom.db fueldesk serve`
 | Check-ins | Weight, meal/training adherence, energy + suggestions |
 | Export | `GET /export.json` full dump |
 | AI Assist | Profile text parse, meal photo estimate, equipment from image/caption |
-| AI providers | Offline heuristics (default), Ollama HTTP, OpenAI-compatible API |
+| AI providers | Offline heuristics (default), Gemini via Google ADK, Ollama HTTP, OpenAI-compatible API |
+| ADK Coach | Multi-turn chat with tools (profile/targets/meal/equipment/regen) — confirm before apply |
 | Settings | Provider / base URL / model / API key (masked; env overrides) |
 | CLI | `fueldesk serve`, `fueldesk version` |
 
@@ -87,8 +88,8 @@ fueldesk does **not** clone those UIs or codebases. It owns the **plan-from-prof
 ```
 src/fueldesk/
   domain/          # BMR/macros, meal & workout generators, adjust
-  services/        # protocol + AI assist orchestration
-  providers/       # offline / ollama / openai_compatible
+  services/        # protocol + AI assist + ADK coach orchestration
+  providers/       # offline / ollama / openai_compatible (+ gemini settings)
   db/              # models, seed foods, session
   web/             # FastAPI app, routes, templates, static
 ```

@@ -4,28 +4,29 @@
 {% block subtitle %}Provider mode, base URL, model, API key (local only){% endblock %}
 
 {% block content %}
-<p class="banner-meta">Active: <strong>{{ provider_label }}</strong> · Env vars <code>FUELDESK_AI_*</code> override saved settings when set. Keys never committed.</p>
+<p class="banner-meta">Active: <strong>{{ provider_label }}</strong> · Env vars <code>FUELDESK_AI_*</code> / <code>GOOGLE_API_KEY</code> override saved settings when set. Keys never committed.</p>
 
 <form method="post" action="/settings/ai" class="card">
   <div class="field">
     <label for="ai_provider">Provider</label>
     <select id="ai_provider" name="ai_provider">
       <option value="offline" {% if ai_config.provider == "offline" %}selected{% endif %}>Offline heuristics</option>
+      <option value="gemini" {% if ai_config.provider == "gemini" %}selected{% endif %}>Gemini (Google ADK)</option>
       <option value="ollama" {% if ai_config.provider == "ollama" %}selected{% endif %}>Ollama (local / Cloud / Pro)</option>
       <option value="openai_compatible" {% if ai_config.provider == "openai_compatible" %}selected{% endif %}>OpenAI-compatible API</option>
     </select>
   </div>
   <div class="field">
     <label for="ai_base_url">Base URL</label>
-    <input id="ai_base_url" name="ai_base_url" type="text" value="{{ stored.get("ai_base_url", ai_config.base_url) }}" placeholder="Local: http://127.0.0.1:11434 · Cloud/Pro: https://ollama.com" />
+    <input id="ai_base_url" name="ai_base_url" type="text" value="{{ stored.get("ai_base_url", ai_config.base_url) }}" placeholder="Local Ollama: http://127.0.0.1:11434 · Cloud: https://ollama.com" />
   </div>
   <div class="field">
     <label for="ai_model">Model</label>
-    <input id="ai_model" name="ai_model" type="text" value="{{ stored.get("ai_model", ai_config.model) }}" placeholder="llama3.2 · llava · kimi-k2.6 · gpt-oss:20b" />
+    <input id="ai_model" name="ai_model" type="text" value="{{ stored.get("ai_model", ai_config.model) }}" placeholder="gemini-2.0-flash · llama3.2 · gpt-4o-mini" />
   </div>
   <div class="field">
     <label for="ai_api_key">API key</label>
-    <input id="ai_api_key" name="ai_api_key" type="password" value="" placeholder="{% if ai_config.has_api_key %}Saved: {{ ai_config.api_key_masked }} — leave blank to keep{% else %}Required for Ollama Cloud/Pro; empty for local{% endif %}" autocomplete="off" />
+    <input id="ai_api_key" name="ai_api_key" type="password" value="" placeholder="{% if ai_config.has_api_key %}Saved: {{ ai_config.api_key_masked }} — leave blank to keep{% else %}Gemini: GOOGLE_API_KEY · Ollama Cloud / OpenAI key{% endif %}" autocomplete="off" />
   </div>
   <label class="chip-check">
     <input type="checkbox" name="clear_api_key" value="1" />
@@ -33,9 +34,23 @@
   </label>
   <div class="form-actions" style="margin-top:16px">
     <button type="submit" class="btn btn-primary">Save settings</button>
-    <a class="btn btn-ghost" href="/ai">AI Assist</a>
+    <a class="btn btn-ghost" href="/ai">AI Coach</a>
   </div>
 </form>
+
+<div class="card">
+  <h2>Google ADK + Gemini</h2>
+  <ul class="suggest-list">
+    <li>Install optional extra: <code>pip install -e ".[adk]"</code></li>
+    <li>Provider: <strong>Gemini (Google ADK)</strong> or set env keys with Offline still for structured helpers</li>
+    <li>Key env: <code>GOOGLE_API_KEY</code> or <code>GEMINI_API_KEY</code> (also accepted as settings API key)</li>
+    <li>Default model: <code>gemini-2.0-flash</code></li>
+    <li>ADK status: <strong>{% if adk_available %}installed{% else %}not installed{% endif %}</strong></li>
+  </ul>
+  {% if not adk_available and adk_status and adk_status.install_hint %}
+  <p class="banner-meta">{{ adk_status.install_hint }}</p>
+  {% endif %}
+</div>
 
 <div class="card">
   <h2>Ollama Cloud / Pro</h2>
@@ -51,10 +66,10 @@
 <div class="card">
   <h2>Environment overrides</h2>
   <ul class="suggest-list">
-    <li><code>FUELDESK_AI_PROVIDER</code> = offline | ollama | openai_compatible</li>
+    <li><code>FUELDESK_AI_PROVIDER</code> = offline | gemini | ollama | openai_compatible</li>
     <li><code>FUELDESK_AI_BASE_URL</code></li>
     <li><code>FUELDESK_AI_MODEL</code></li>
-    <li><code>FUELDESK_AI_API_KEY</code> or <code>OLLAMA_API_KEY</code></li>
+    <li><code>FUELDESK_AI_API_KEY</code> or <code>GOOGLE_API_KEY</code> / <code>GEMINI_API_KEY</code> / <code>OLLAMA_API_KEY</code></li>
   </ul>
 </div>
 {% endblock %}

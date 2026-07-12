@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f1419" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>{% block title %}fueldesk{% endblock %} · Fuel & Training Protocol Desk</title>
   <link rel="stylesheet" href="/static/app.css" />
 </head>
@@ -16,7 +18,7 @@
           <div class="brand-tag">protocol desk</div>
         </div>
       </div>
-      <nav class="nav">
+      <nav class="nav desktop-nav">
         {% for href, key, label in nav %}
         <a class="nav-link {% if page == key %}active{% endif %}" href="{{ href }}">{{ label }}</a>
         {% endfor %}
@@ -54,5 +56,14 @@
       </footer>
     </div>
   </div>
+
+  <nav class="bottom-nav" aria-label="Mobile primary">
+    {% for href, key, label, icon in mobile_nav %}
+    <a class="bottom-nav-link {% if page == key %}active{% endif %}" href="{{ href }}">
+      <span class="bottom-nav-icon" aria-hidden="true">{{ icon }}</span>
+      <span class="bottom-nav-label">{{ label }}</span>
+    </a>
+    {% endfor %}
+  </nav>
 </body>
 </html>

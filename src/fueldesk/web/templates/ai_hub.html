@@ -1,38 +1,147 @@
 {% extends "base.html" %}
-{% block title %}AI Assist{% endblock %}
-{% block heading %}AI Assist{% endblock %}
-{% block subtitle %}Faster onboarding via text + image — confirm before apply{% endblock %}
+{% block title %}AI Coach{% endblock %}
+{% block heading %}AI Coach{% endblock %}
+{% block subtitle %}Chat-first planning help · confirm before apply{% endblock %}
 
 {% block content %}
-<p class="banner-meta">Provider: <strong>{{ provider_label }}</strong> · Offline heuristics always available · Estimates are not medical advice.</p>
+<p class="banner-meta">
+  Provider: <strong>{{ provider_label }}</strong>
+  · ADK: <strong>{% if adk_available %}ready{% else %}optional{% endif %}</strong>
+  · Estimates are not medical advice.
+</p>
 
-<div class="ai-card-grid">
-  <a class="card ai-card" href="/ai/profile">
-    <div class="ai-card-icon" aria-hidden="true">✍️</div>
-    <h2>Describe yourself</h2>
-    <p class="muted">Free text → structured profile preview → apply & regenerate protocol.</p>
-    <span class="badge badge-provider">{{ provider_label }}</span>
-  </a>
-  <a class="card ai-card" href="/ai/meal">
-    <div class="ai-card-icon" aria-hidden="true">📷</div>
-    <h2>Meal photo estimate</h2>
-    <p class="muted">Upload a plate photo (or caption) → estimated items + macros. Confirm before logging.</p>
-    <span class="badge badge-provider">{{ provider_label }}</span>
-  </a>
-  <a class="card ai-card" href="/ai/equipment">
-    <div class="ai-card-icon" aria-hidden="true">🏋️</div>
-    <h2>Equipment photo</h2>
-    <p class="muted">Image + optional caption → equipment chips → apply to profile.</p>
-    <span class="badge badge-provider">{{ provider_label }}</span>
-  </a>
+{% if not adk_available %}
+<div class="flash flash-info install-hint">
+  Offline coach is active. For Google ADK + Gemini multi-turn tools:
+  <code>pip install -e ".[adk]"</code> then set <code>GOOGLE_API_KEY</code> / <code>GEMINI_API_KEY</code>
+  or choose <strong>Gemini (ADK)</strong> in <a href="/settings/ai">Settings</a>.
 </div>
+{% endif %}
 
-<div class="card tip">
-  <h2>Tips</h2>
-  <ul class="suggest-list">
-    <li>Default provider is <strong>Offline</strong> (regex heuristics, no network).</li>
-    <li>Configure Ollama or OpenAI-compatible APIs under <a href="/settings/ai">Settings</a>.</li>
-    <li>Always review confidence badges before applying.</li>
-  </ul>
-</div>
+<section class="coach-layout">
+  <div class="card coach-panel">
+    <div class="card-head">
+      <h2>Coach chat</h2>
+      <form method="post" action="/ai/chat" class="inline-form">
+        <input type="hidden" name="action" value="clear" />
+        <button type="submit" class="btn btn-ghost btn-sm">Clear</button>
+      </form>
+    </div>
+
+    <div class="chat-transcript" id="chat-transcript">
+      {% if not messages %}
+      <div class="chat-empty">
+        <div class="empty-icon" aria-hidden="true">✦</div>
+        <p>Ask me to parse a profile, explain your calories, estimate a meal, or stage a protocol rebuild.</p>
+      </div>
+      {% endif %}
+      {% for m in messages %}
+      <div class="chat-bubble chat-{{ m.role }}">
+        <div class="chat-role">{% if m.role == 'user' %}You{% else %}Coach{% endif %}</div>
+        <div class="chat-body">{{ m.content }}</div>
+        {% if m.tools_used %}
+        <div class="tool-chips">
+          {% for t in m.tools_used %}
+          <span class="chip tool-chip">Used: {{ t }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if m.provider and m.role == 'assistant' %}
+        <div class="chat-meta">
+          <span class="badge badge-provider">{{ m.provider }}</span>
+          {% if m.confidence is not none %}
+          <span class="badge badge-conf-{{ 'high' if m.confidence >= 0.7 else ('medium' if m.confidence >= 0.4 else 'low') }}">
+            conf {{ '%.0f'|format(m.confidence * 100) }}%
+          </span>
+          {% endif %}
+          {% if m.fallback_used %}<span class="badge badge-conf-medium">fallback</span>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if suggested_prompts %}
+    <div class="suggestion-chips" aria-label="Suggested prompts">
+      {% for p in suggested_prompts %}
+      <form method="post" action="/ai/chat" class="chip-form">
+        <input type="hidden" name="action" value="chat" />
+        <input type="hidden" name="message" value="{{ p }}" />
+        <button type="submit" class="chip-btn">{{ p }}</button>
+      </form>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" action="/ai/chat" class="chat-compose">
+      <input type="hidden" name="action" value="chat" />
+      <label class="sr-only" for="coach-message">Message</label>
+      <textarea id="coach-message" name="message" rows="2" placeholder="e.g. 28F 165cm 62kg vegetarian lose fat 4 days/week dumbbells" required></textarea>
+      <button type="submit" class="btn btn-primary btn-send">Send</button>
+    </form>
+  </div>
+
+  <aside class="coach-side">
+    {% if staged %}
+    <div class="card staged-card">
+      <div class="card-head">
+        <h2>Staged · confirm</h2>
+        <span class="badge badge-conf-{{ conf_level }}">{{ staged.kind }}</span>
+      </div>
+      {% if staged.kind == 'profile' and staged.fields %}
+      <ul class="suggest-list">
+        <li>{{ staged.fields.sex }}, age {{ staged.fields.age }}, {{ staged.fields.height_cm }} cm, {{ staged.fields.weight_kg }} kg</li>
+        <li>Goal {{ staged.fields.goal }} · {{ staged.fields.days_per_week }} days · {{ staged.fields.experience }}</li>
+        <li>Diet: {{ staged.fields.diet_flags|join(', ') or 'none' }}</li>
+        <li>Equipment: {{ staged.fields.equipment|join(', ') }}</li>
+      </ul>
+      {% elif staged.kind == 'equipment' %}
+      <p>Equipment: <strong>{{ staged.equipment|join(', ') }}</strong></p>
+      {% elif staged.kind == 'meal' %}
+      <p class="muted">Meal estimate ready to save to today's check-in notes.</p>
+      {% elif staged.kind == 'regenerate_protocol' %}
+      <p>Rebuild this week's meals + training from your current profile.</p>
+      {% endif %}
+      <div class="form-actions row-actions">
+        <form method="post" action="/ai/chat">
+          <input type="hidden" name="action" value="apply_staged" />
+          <button type="submit" class="btn btn-primary">Apply</button>
+        </form>
+        <form method="post" action="/ai/chat">
+          <input type="hidden" name="action" value="discard_staged" />
+          <button type="submit" class="btn btn-ghost">Discard</button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div class="card empty-mini">
+      <h2>Nothing staged</h2>
+      <p class="muted">When the coach proposes a profile, meal note, equipment change, or regen, you'll confirm it here.</p>
+    </div>
+    {% endif %}
+
+    <div class="ai-card-grid compact-grid">
+      <a class="card ai-card" href="/ai/profile">
+        <div class="ai-card-icon" aria-hidden="true">✍️</div>
+        <h2>Describe yourself</h2>
+        <p class="muted">Structured parse form</p>
+      </a>
+      <a class="card ai-card" href="/ai/meal">
+        <div class="ai-card-icon" aria-hidden="true">📷</div>
+        <h2>Meal photo</h2>
+        <p class="muted">Estimate macros</p>
+      </a>
+      <a class="card ai-card" href="/ai/equipment">
+        <div class="ai-card-icon" aria-hidden="true">🏋️</div>
+        <h2>Equipment</h2>
+        <p class="muted">Caption or photo</p>
+      </a>
+      <a class="card ai-card" href="/settings/ai">
+        <div class="ai-card-icon" aria-hidden="true">⚙️</div>
+        <h2>Settings</h2>
+        <p class="muted">Gemini / Ollama / API</p>
+      </a>
+    </div>
+  </aside>
+</section>
 {% endblock %}

@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 
 from fueldesk.db.session import get_engine, get_session_factory
 from fueldesk.domain.targets import validate_profile_ranges
-from fueldesk.services import ai_assist, protocol as svc
+from fueldesk.services import adk_coach, ai_assist, protocol as svc
 from fueldesk.web.routes import (
     ACTIVITY_OPTIONS,
     DIET_OPTIONS,
@@ -40,7 +40,24 @@ def _conf_badge(conf: float) -> str:
 def _provider_ctx(session) -> dict[str, Any]:
     cfg = ai_assist.resolve_ai_config(session)
     public = cfg.as_public_dict()
-    return {"ai_config": public, "provider_label": public["label"]}
+    status = adk_coach.adk_status()
+    return {
+        "ai_config": public,
+        "provider_label": public["label"],
+        "adk_status": status,
+        "adk_available": status["available"],
+    }
+
+
+def _coach_key(request: Request) -> str:
+    # Local single-user; keep stable per browser session cookie id if present
+    sid = request.session.get("coach_session_id")
+    if not sid:
+        import uuid
+
+        sid = uuid.uuid4().hex[:12]
+        request.session["coach_session_id"] = sid
+    return str(sid)
 
 
 @router.get("/ai", response_class=HTMLResponse)
@@ -48,11 +65,71 @@ def ai_hub(request: Request) -> HTMLResponse:
     session = _db()
     try:
         profile = svc.get_profile(session)
+        key = _coach_key(request)
+        messages = adk_coach.get_chat_history(key)
+        staged = adk_coach.get_staged(key)
         return templates.TemplateResponse(
             request,
             "ai_hub.html",
-            _base_ctx(request, page="ai", profile=profile, **_provider_ctx(session)),
+            _base_ctx(
+                request,
+                page="ai",
+                profile=profile,
+                messages=messages,
+                staged=staged,
+                suggested_prompts=adk_coach.SUGGESTED_PROMPTS,
+                conf_level=_conf_badge(float((staged or {}).get("confidence") or 0)),
+                **_provider_ctx(session),
+            ),
         )
+    finally:
+        session.close()
+
+
+@router.post("/ai/chat", response_model=None)
+async def ai_coach_chat(request: Request):
+    form = await request.form()
+    text_in = str(form.get("message") or form.get("text") or "").strip()
+    action = str(form.get("action") or "chat")
+    session = _db()
+    try:
+        key = _coach_key(request)
+        if action == "clear":
+            adk_coach.clear_chat_history(key)
+            _flash(request, "Coach chat cleared.", "info")
+            return RedirectResponse("/ai", status_code=303)
+        if action == "discard_staged":
+            adk_coach.pop_staged(key)
+            _flash(request, "Staged action discarded.", "info")
+            return RedirectResponse("/ai", status_code=303)
+        if action == "apply_staged":
+            try:
+                result = adk_coach.apply_staged(session, key)
+                if result.get("ok"):
+                    session.commit()
+                    _flash(request, result.get("message") or "Applied.", "success")
+                    kind = result.get("kind")
+                    if kind == "meal":
+                        return RedirectResponse("/checkins", status_code=303)
+                    if kind in ("profile", "regenerate_protocol"):
+                        return RedirectResponse("/", status_code=303)
+                    if kind == "equipment":
+                        return RedirectResponse("/training", status_code=303)
+                    return RedirectResponse("/ai", status_code=303)
+                session.rollback()
+                _flash(request, result.get("message") or "Nothing to apply.", "error")
+                return RedirectResponse("/ai", status_code=303)
+            except Exception as exc:  # noqa: BLE001
+                session.rollback()
+                _flash(request, f"Apply failed: {exc}", "error")
+                return RedirectResponse("/ai", status_code=303)
+        if not text_in:
+            _flash(request, "Type a message for the coach.", "error")
+            return RedirectResponse("/ai", status_code=303)
+        result = adk_coach.coach_chat(session, text_in, session_key=key)
+        if result.fallback_used:
+            _flash(request, "ADK unavailable — used offline coach heuristics.", "info")
+        return RedirectResponse("/ai", status_code=303)
     finally:
         session.close()
 
@@ -376,6 +453,8 @@ def settings_ai_get(request: Request) -> HTMLResponse:
                 ai_config=cfg.as_public_dict(),
                 stored=stored,
                 provider_label=cfg.label(),
+                adk_status=adk_coach.adk_status(),
+                adk_available=adk_coach.ADK_AVAILABLE,
             ),
         )
     finally:
@@ -388,7 +467,7 @@ async def settings_ai_post(request: Request):
     session = _db()
     try:
         provider = str(form.get("ai_provider") or "offline").strip().lower()
-        if provider not in ("offline", "ollama", "openai_compatible"):
+        if provider not in ("offline", "ollama", "openai_compatible", "gemini"):
             provider = "offline"
         base_url = str(form.get("ai_base_url") or "").strip()
         model = str(form.get("ai_model") or "").strip()

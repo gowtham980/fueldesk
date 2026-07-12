@@ -1,25 +1,57 @@
 {% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
-{% block heading %}Dashboard{% endblock %}
+{% block title %}Home{% endblock %}
+{% block heading %}Home{% endblock %}
 {% block subtitle %}Today’s fuel + training at a glance{% endblock %}
 
 {% block content %}
 {% if not profile %}
 <section class="empty-state card">
   <div class="empty-icon" aria-hidden="true">◇</div>
-  <h2>Set up your profile</h2>
-  <p>Enter body stats, goal, diet rules, and equipment. fueldesk will build transparent targets plus a weekly meal and training protocol.</p>
-  <a class="btn btn-primary" href="/profile">Set up your profile</a>
+  <h2>Welcome to fueldesk</h2>
+  <p>Enter body stats, goal, diet rules, and equipment. We'll build transparent targets plus a weekly meal and training protocol.</p>
+  <div class="cta-row">
+    <a class="btn btn-primary" href="/profile">Next: complete profile</a>
+    <a class="btn btn-accent" href="/ai">Open AI Coach</a>
+  </div>
+</section>
+
+<section class="cta-grid">
+  <a class="card cta-card" href="/profile">
+    <span class="cta-step">1</span>
+    <h2>Complete profile</h2>
+    <p class="muted">Sex, age, height, weight, goal, diet, equipment.</p>
+  </a>
+  <a class="card cta-card" href="/ai">
+    <span class="cta-step">✦</span>
+    <h2>Or chat with AI Coach</h2>
+    <p class="muted">Paste a free-text description and confirm the preview.</p>
+  </a>
 </section>
 {% elif not targets %}
 <section class="empty-state card">
-  <h2>No protocol yet</h2>
-  <p>Generate your first week of meals and training from your profile.</p>
-  <form method="post" action="/protocol/generate">
-    <button class="btn btn-primary" type="submit">Generate this week's protocol</button>
-  </form>
+  <div class="empty-icon" aria-hidden="true">⚡</div>
+  <h2>Profile ready — generate protocol</h2>
+  <p>Build this week's meals and training from your stats.</p>
+  <div class="cta-row">
+    <form method="post" action="/protocol/generate">
+      <button class="btn btn-primary" type="submit">Generate this week's protocol</button>
+    </form>
+    <a class="btn btn-ghost" href="/ai">Open AI Coach</a>
+  </div>
 </section>
 {% else %}
+<section class="hero-row">
+  <div class="hero-greet">
+    <p class="eyebrow">Your desk</p>
+    <h2 class="hero-title">Goal: {{ profile.goal }} · {{ profile.days_per_week }} training days</h2>
+    <p class="muted">{{ profile.weight_kg }} kg · equipment {{ profile.equipment|join(', ') }}</p>
+  </div>
+  <div class="cta-row">
+    <a class="btn btn-accent" href="/ai">Open AI Coach</a>
+    <a class="btn btn-ghost" href="/checkins">Log check-in</a>
+  </div>
+</section>
+
 <section class="stat-grid">
   <article class="card stat-card">
     <div class="stat-label">Calories</div>
@@ -67,7 +99,12 @@
         {% endfor %}
       </ul>
     {% else %}
-      <p class="muted">No meal plan — generate protocol.</p>
+      <div class="empty-mini">
+        <p class="muted">No meal plan — generate protocol.</p>
+        <form method="post" action="/protocol/generate">
+          <button class="btn btn-primary btn-sm" type="submit">Generate</button>
+        </form>
+      </div>
     {% endif %}
   </article>
 
@@ -87,7 +124,9 @@
         {% endfor %}
       </ul>
     {% else %}
-      <p class="muted">No training plan — generate protocol.</p>
+      <div class="empty-mini">
+        <p class="muted">No training plan — generate protocol.</p>
+      </div>
     {% endif %}
   </article>
 </section>
@@ -99,6 +138,7 @@
       <a href="/checkins" class="text-link">Log check-in</a>
     </div>
     {% if checkins %}
+    <div class="table-wrap">
     <table class="table">
       <thead>
         <tr><th>Date</th><th>Weight</th><th>Meals%</th><th>Train%</th><th>Energy</th></tr>
@@ -115,8 +155,12 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
     {% else %}
-    <p class="muted">No check-ins yet. Log weight and adherence to unlock adjustments.</p>
+    <div class="empty-mini">
+      <p class="muted">No check-ins yet. Log weight and adherence to unlock adjustments.</p>
+      <a class="btn btn-ghost btn-sm" href="/checkins">Log check-in</a>
+    </div>
     {% endif %}
   </article>
 
