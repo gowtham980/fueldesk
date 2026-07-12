@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Any, Optional
 
 from sqlalchemy import Date, DateTime, Float, Integer, String, Text, JSON
@@ -30,7 +30,7 @@ class Profile(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     units: Mapped[str] = mapped_column(String(16), default="metric")
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
     )
 
 
@@ -45,7 +45,7 @@ class Targets(Base):
     carbs_g: Mapped[int] = mapped_column(Integer)
     fat_g: Mapped[int] = mapped_column(Integer)
     formula_notes: Mapped[str] = mapped_column(Text, default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class WorkoutPlan(Base):
@@ -54,7 +54,7 @@ class WorkoutPlan(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     week_start: Mapped[date] = mapped_column(Date)
     days: Mapped[Any] = mapped_column(JSON, default=list)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class MealPlan(Base):
@@ -63,7 +63,7 @@ class MealPlan(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     week_start: Mapped[date] = mapped_column(Date)
     days: Mapped[Any] = mapped_column(JSON, default=list)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class CheckIn(Base):
@@ -76,7 +76,7 @@ class CheckIn(Base):
     adherence_training: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     energy: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class FoodItem(Base):

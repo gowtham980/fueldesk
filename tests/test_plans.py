@@ -103,3 +103,52 @@ def test_adjust_flat_weight_lose_goal():
 def test_adjust_empty_checkins():
     tips = suggest_adjustments([])
     assert len(tips) >= 1
+
+
+def test_empty_pool_never_unfilters_meat():
+    """Meat-only DB + vegetarian must never reintroduce meat via unfiltered fallback."""
+    meat_only = [
+        {"name": "Chicken Breast", "calories": 165, "protein": 31, "carbs": 0, "fat": 3.6, "tags": ["poultry", "meat"]},
+        {"name": "Salmon", "calories": 208, "protein": 20, "carbs": 0, "fat": 13, "tags": ["fish", "seafood"]},
+        {"name": "Beef Patty", "calories": 250, "protein": 20, "carbs": 0, "fat": 18, "tags": ["meat"]},
+    ]
+    plan = generate_meal_week(
+        foods=meat_only,
+        calorie_target=1800,
+        protein_g=120,
+        carbs_g=150,
+        fat_g=50,
+        diet_flags=["vegetarian"],
+        seed_key="empty-pool",
+    )
+    assert not contains_meat(plan)
+    names = [
+        item.get("name", "").lower()
+        for day in plan
+        for meal in day.get("meals", [])
+        for item in meal.get("foods", [])
+    ]
+    for banned in ("chicken", "salmon", "beef"):
+        assert all(banned not in n for n in names)
+
+
+def test_empty_pool_vegan_no_animal_products():
+    animal_only = [
+        {"name": "Greek Yogurt", "calories": 100, "protein": 10, "carbs": 6, "fat": 4, "tags": ["dairy"]},
+        {"name": "Eggs", "calories": 140, "protein": 12, "carbs": 1, "fat": 10, "tags": ["egg"]},
+        {"name": "Chicken", "calories": 165, "protein": 31, "carbs": 0, "fat": 3.6, "tags": ["poultry", "meat"]},
+    ]
+    plan = generate_meal_week(
+        foods=animal_only,
+        calorie_target=1600,
+        protein_g=100,
+        carbs_g=140,
+        fat_g=45,
+        diet_flags=["vegan"],
+        seed_key="vegan-empty",
+    )
+    for day in plan:
+        for meal in day.get("meals", []):
+            for item in meal.get("foods", []):
+                tags = {t.lower() for t in item.get("tags", [])}
+                assert not (tags & {"meat", "poultry", "fish", "seafood", "dairy", "egg"})

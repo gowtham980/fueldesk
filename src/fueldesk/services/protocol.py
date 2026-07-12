@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import select
@@ -76,7 +76,7 @@ def save_profile(session: Session, data: dict[str, Any]) -> Profile:
     profile.experience = data.get("experience") or "beginner"
     profile.notes = data.get("notes") or ""
     profile.units = data.get("units") or "metric"
-    profile.updated_at = datetime.utcnow()
+    profile.updated_at = datetime.now(timezone.utc)
     session.flush()
     return profile
 
@@ -248,7 +248,7 @@ def export_payload(session: Session) -> dict[str, Any]:
     return {
         "app": "fueldesk",
         "version": "0.1.0",
-        "exported_at": datetime.utcnow().isoformat() + "Z",
+        "exported_at": datetime.now(timezone.utc).isoformat(),
         "disclaimer": "Educational fitness planning only — not medical advice.",
         "profile": profile_dict(profile),
         "targets": (

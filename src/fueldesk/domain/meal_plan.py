@@ -149,8 +149,8 @@ def generate_meal_week(
     Returns list of {day, meals[{name,calories,protein,carbs,fat,items[]}]}
     """
     pool = filter_foods(foods, diet_flags)
-    if not pool:
-        pool = list(foods)  # last resort unfiltered (should not happen with seed)
+    # Never unfilter: empty pool keeps placeholders without disallowed tags.
+    # (_pick_items_for_budget already returns a neutral "Mixed plate" placeholder.)
 
     seed = _stable_seed(seed_key, calorie_target, protein_g, sorted(diet_flags or []))
     days: list[dict[str, Any]] = []
