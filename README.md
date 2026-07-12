@@ -35,6 +35,7 @@ cd fueldesk
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
+# Optional Google ADK coach: pip install -e ".[adk]"
 
 # Run tests
 pytest
@@ -121,6 +122,26 @@ Or configure under **Settings** (stored in SQLite; never commit keys). Remote fa
 
 ### Ollama Cloud / Pro
 Same **Ollama** provider — set base URL to `https://ollama.com`, paste your API key from [ollama.com/settings/keys](https://ollama.com/settings/keys), pick a hosted model id (e.g. `kimi-k2.6`). Uses native `/api/chat` (not OpenAI `/v1`). Env: `OLLAMA_API_KEY` or `FUELDESK_AI_API_KEY`.
+
+
+
+## AI Coach (v0.3) — Google ADK
+
+Chat-first coach with tools (profile parse, meal/equipment estimates, protocol regen).
+Confirm-before-apply for staged changes. Offline multi-turn works without ADK.
+
+```bash
+# Optional Google ADK + Gemini
+pip install -e ".[adk]"
+export GOOGLE_API_KEY=***          # or GEMINI_API_KEY
+export FUELDESK_AI_PROVIDER=gemini
+export FUELDESK_AI_MODEL=gemini-2.0-flash   # optional
+fueldesk serve
+# open /ai — ADK coach when deps + key present; otherwise offline coach
+```
+
+Also configurable under **Settings → AI** (provider **Gemini (Google ADK)**).
+Without the `[adk]` extra, core planning and offline AI Assist still work.
 
 ## Development
 
