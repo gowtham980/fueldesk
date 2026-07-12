@@ -11,21 +11,21 @@
     <label for="ai_provider">Provider</label>
     <select id="ai_provider" name="ai_provider">
       <option value="offline" {% if ai_config.provider == "offline" %}selected{% endif %}>Offline heuristics</option>
-      <option value="ollama" {% if ai_config.provider == "ollama" %}selected{% endif %}>Ollama (local HTTP)</option>
+      <option value="ollama" {% if ai_config.provider == "ollama" %}selected{% endif %}>Ollama (local / Cloud / Pro)</option>
       <option value="openai_compatible" {% if ai_config.provider == "openai_compatible" %}selected{% endif %}>OpenAI-compatible API</option>
     </select>
   </div>
   <div class="field">
     <label for="ai_base_url">Base URL</label>
-    <input id="ai_base_url" name="ai_base_url" type="text" value="{{ stored.get("ai_base_url", ai_config.base_url) }}" placeholder="http://127.0.0.1:11434 or https://api.openai.com/v1" />
+    <input id="ai_base_url" name="ai_base_url" type="text" value="{{ stored.get("ai_base_url", ai_config.base_url) }}" placeholder="Local: http://127.0.0.1:11434 · Cloud/Pro: https://ollama.com" />
   </div>
   <div class="field">
     <label for="ai_model">Model</label>
-    <input id="ai_model" name="ai_model" type="text" value="{{ stored.get("ai_model", ai_config.model) }}" placeholder="llama3.2 / gpt-4o-mini / llava" />
+    <input id="ai_model" name="ai_model" type="text" value="{{ stored.get("ai_model", ai_config.model) }}" placeholder="llama3.2 · llava · kimi-k2.6 · gpt-oss:20b" />
   </div>
   <div class="field">
     <label for="ai_api_key">API key</label>
-    <input id="ai_api_key" name="ai_api_key" type="password" value="" placeholder="{% if ai_config.has_api_key %}Saved: {{ ai_config.api_key_masked }} — leave blank to keep{% else %}Optional for local Ollama{% endif %}" autocomplete="off" />
+    <input id="ai_api_key" name="ai_api_key" type="password" value="" placeholder="{% if ai_config.has_api_key %}Saved: {{ ai_config.api_key_masked }} — leave blank to keep{% else %}Required for Ollama Cloud/Pro; empty for local{% endif %}" autocomplete="off" />
   </div>
   <label class="chip-check">
     <input type="checkbox" name="clear_api_key" value="1" />
@@ -38,12 +38,23 @@
 </form>
 
 <div class="card">
+  <h2>Ollama Cloud / Pro</h2>
+  <ul class="suggest-list">
+    <li>Provider: <strong>Ollama</strong></li>
+    <li>Base URL: <code>https://ollama.com</code> (native Ollama API — not <code>/v1</code>)</li>
+    <li>API key: from <a href="https://ollama.com/settings/keys" target="_blank" rel="noopener">ollama.com/settings/keys</a></li>
+    <li>Model: hosted id e.g. <code>kimi-k2.6</code>, <code>gpt-oss:20b</code>, vision models for meal/equipment photos</li>
+    <li>Env also accepted: <code>OLLAMA_API_KEY</code> (same as OpenClaw)</li>
+  </ul>
+  <p class="banner-meta">Local Ollama: leave base URL empty (defaults to <code>http://127.0.0.1:11434</code>) and leave API key empty.</p>
+</div>
+<div class="card">
   <h2>Environment overrides</h2>
   <ul class="suggest-list">
     <li><code>FUELDESK_AI_PROVIDER</code> = offline | ollama | openai_compatible</li>
     <li><code>FUELDESK_AI_BASE_URL</code></li>
     <li><code>FUELDESK_AI_MODEL</code></li>
-    <li><code>FUELDESK_AI_API_KEY</code></li>
+    <li><code>FUELDESK_AI_API_KEY</code> or <code>OLLAMA_API_KEY</code></li>
   </ul>
 </div>
 {% endblock %}

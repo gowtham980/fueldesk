@@ -117,6 +117,10 @@ export FUELDESK_AI_API_KEY=sk-...
 
 Or configure under **Settings** (stored in SQLite; never commit keys). Remote failures fall back to offline heuristics with a banner.
 
+
+### Ollama Cloud / Pro
+Same **Ollama** provider — set base URL to `https://ollama.com`, paste your API key from [ollama.com/settings/keys](https://ollama.com/settings/keys), pick a hosted model id (e.g. `kimi-k2.6`). Uses native `/api/chat` (not OpenAI `/v1`). Env: `OLLAMA_API_KEY` or `FUELDESK_AI_API_KEY`.
+
 ## Development
 
 ```bash

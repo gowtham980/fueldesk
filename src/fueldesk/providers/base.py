@@ -30,6 +30,9 @@ class AIConfig:
         if self.provider == "offline":
             return "Offline"
         if self.provider == "ollama":
+            host = (self.base_url or "").lower()
+            if "ollama.com" in host:
+                return "Ollama Cloud/Pro"
             return "Ollama"
         return "API"
 
@@ -174,6 +177,7 @@ def load_ai_config(settings: dict[str, str] | None = None) -> AIConfig:
     ).strip()
     api_key = (
         os.environ.get("FUELDESK_AI_API_KEY")
+        or os.environ.get("OLLAMA_API_KEY")
         or settings.get("ai_api_key")
         or ""
     ).strip()

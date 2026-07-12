@@ -1,4 +1,4 @@
-"""Ollama HTTP provider (local). Falls back to offline on any failure."""
+"""Ollama HTTP provider (local + Cloud/Pro). Falls back to offline on any failure."""
 
 from __future__ import annotations
 
@@ -53,6 +53,14 @@ class OllamaProvider:
         self.config = config
         self.base_url = (config.base_url or "http://127.0.0.1:11434").rstrip("/")
         self.model = config.model or "llama3.2"
+        self.api_key = (config.api_key or "").strip()
+
+    def _headers(self) -> dict[str, str]:
+        """Local Ollama needs no auth; Ollama Cloud/Pro uses Bearer API key."""
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        return headers
 
     def _chat(
         self,
@@ -70,9 +78,12 @@ class OllamaProvider:
         if images_b64:
             payload["messages"][0]["images"] = images_b64
 
+        headers = self._headers()
         with httpx.Client(timeout=timeout) as client:
             try:
-                r = client.post(f"{self.base_url}/api/chat", json=payload)
+                r = client.post(
+                    f"{self.base_url}/api/chat", json=payload, headers=headers
+                )
                 r.raise_for_status()
                 data = r.json()
                 return (data.get("message") or {}).get("content") or data.get("response") or ""
@@ -85,7 +96,9 @@ class OllamaProvider:
                 }
                 if images_b64:
                     gen["images"] = images_b64
-                r = client.post(f"{self.base_url}/api/generate", json=gen)
+                r = client.post(
+                    f"{self.base_url}/api/generate", json=gen, headers=headers
+                )
                 r.raise_for_status()
                 return r.json().get("response") or ""
 
