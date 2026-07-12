@@ -81,11 +81,11 @@ def _base_ctx(request: Request, **extra: Any) -> dict[str, Any]:
             ("/settings/ai", "settings", "Settings"),
         ],
         "mobile_nav": [
-            ("/", "dashboard", "Home", "⌂"),
-            ("/meals", "meals", "Meals", "🍽"),
-            ("/ai", "ai", "AI", "✦"),
-            ("/training", "training", "Train", "🏋️"),
-            ("/profile", "profile", "Profile", "◎"),
+            ("/", "dashboard", "Home", "🏠"),
+            ("/meals", "meals", "Meals", "🍽️"),
+            ("/ai", "ai", "Coach", "✨"),
+            ("/training", "training", "Train", "💪"),
+            ("/profile", "profile", "You", "👤"),
         ],
         "disclaimer": (
             "Educational fitness planning tool only — not medical advice. "

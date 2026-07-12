@@ -71,7 +71,7 @@ def test_ai_profile_parse_and_apply(client: TestClient):
 
     exp = client.get("/export.json")
     data = exp.json()
-    assert data["version"] == "0.3.0"
+    assert data["version"] == "0.3.1"
     assert data["profile"]["sex"] == "female"
     assert "vegetarian" in data["profile"]["diet_flags"]
 
@@ -167,4 +167,4 @@ def test_settings_ai_save(client: TestClient):
 
 def test_healthz_version(client: TestClient):
     r = client.get("/healthz")
-    assert r.json()["version"] == "0.3.0"
+    assert r.json()["version"] == "0.3.1"

@@ -103,7 +103,7 @@ def test_apply_staged_profile(client: TestClient):
     )
     assert apply.status_code in (302, 303)
     exp = client.get("/export.json").json()
-    assert exp["version"] == "0.3.0"
+    assert exp["version"] == "0.3.1"
     assert exp["profile"]["sex"] == "female"
     assert exp["targets"]["calorie_target"] > 0
 

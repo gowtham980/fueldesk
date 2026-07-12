@@ -3,19 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f1419" />
+  <meta name="theme-color" content="#0c1117" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>{% block title %}fueldesk{% endblock %} · Fuel & Training Protocol Desk</title>
-  <link rel="stylesheet" href="/static/app.css" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>{% block title %}fueldesk{% endblock %} · Fueldesk</title>
+  <link rel="stylesheet" href="/static/app.css?v=0.3.1" />
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <div class="app-shell">
     <aside class="sidebar" aria-label="Primary">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true">⚡</span>
         <div>
           <div class="brand-name">fueldesk</div>
-          <div class="brand-tag">protocol desk</div>
+          <div class="brand-tag">your plan desk</div>
         </div>
       </div>
       <nav class="nav desktop-nav">
@@ -27,7 +28,7 @@
       <div class="sidebar-foot">
         <form method="post" action="/protocol/generate">
           <button type="submit" class="btn btn-accent btn-block" {% if not profile %}disabled{% endif %}>
-            Generate this week's protocol
+            Rebuild this week
           </button>
         </form>
       </div>
@@ -35,8 +36,12 @@
 
     <div class="main">
       <header class="topbar">
-        <h1 class="page-title">{% block heading %}Dashboard{% endblock %}</h1>
-        <p class="page-sub">{% block subtitle %}Local-first diet + training protocol{% endblock %}</p>
+        <div class="topbar-text">
+          <p class="page-kicker">{% block kicker %}Fueldesk{% endblock %}</p>
+          <h1 class="page-title">{% block heading %}Dashboard{% endblock %}</h1>
+          <p class="page-sub">{% block subtitle %}Local-first diet + training protocol{% endblock %}</p>
+        </div>
+        {% block topbar_actions %}{% endblock %}
       </header>
 
       {% if flashes %}
@@ -65,5 +70,24 @@
     </a>
     {% endfor %}
   </nav>
+  <script>
+    // Keep chat transcript scrolled to latest message on mobile
+    (function () {
+      var el = document.getElementById("chat-transcript");
+      if (el) el.scrollTop = el.scrollHeight;
+      // Soften iOS zoom on focus for small inputs
+      var meta = document.querySelector('meta[name="viewport"]');
+      if (meta && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        document.addEventListener("focusin", function (e) {
+          if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT")) {
+            meta.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover");
+          }
+        });
+        document.addEventListener("focusout", function () {
+          meta.setAttribute("content", "width=device-width, initial-scale=1, viewport-fit=cover");
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
